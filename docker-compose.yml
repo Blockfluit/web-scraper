@@ -1,0 +1,8 @@
+services:
+  web-scraper:
+    image: web-scraper:latest
+    container_name: web_scraper
+    ports:
+      - 8086:8080/tcp
+    restart: unless-stopped
+    env_file: ./stack.env

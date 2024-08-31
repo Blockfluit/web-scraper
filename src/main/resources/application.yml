@@ -1,0 +1,10 @@
+spring:
+  application.name: web-scraper
+  profiles.active: ${ACTIVE_PROFILE:dev}
+
+server:
+  servlet:
+    context-path: /api/v1
+
+imdb:
+  baseUrl: {IMDB_BASEURL}
