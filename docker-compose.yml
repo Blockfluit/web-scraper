@@ -1,8 +1,17 @@
 services:
-  web-scraper:
+  api:
     image: web-scraper:latest
-    container_name: web_scraper
-    ports:
-      - 8086:8080/tcp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.web-scraper.rule=PathPrefix(`${SERVER_SERVLET_CONTEXT_PATH}`)"
+      - "traefik.http.routers.web-scraper.entrypoints=web"
+      - "traefik.http.services.web-scraper.loadbalancer.server.port=8080"
     restart: unless-stopped
     env_file: ./stack.env
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
