@@ -44,11 +44,15 @@ public class ImdbScraper {
 
                 // Wait for title to visible.
                 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
                 sink.success(new Title(id, driver, this));
+            } catch(ImdbScrapeException e) {
+                log.error(e.getMessage(), e);
+                sink.error(e);
             } catch (Exception e) {
-                sink.error(new ImdbScrapeException(e));
+                sink.error(e);
             } finally {
                 driver.quit();
             }
@@ -71,9 +75,11 @@ public class ImdbScraper {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
                 sink.success(new Name(id, driver));
-            } catch (Exception e) {
+            } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
-                sink.error(new ImdbScrapeException(e));
+                sink.error(e);
+            } catch (Exception e) {
+                sink.error(e);
             } finally {
                 driver.quit();
             }

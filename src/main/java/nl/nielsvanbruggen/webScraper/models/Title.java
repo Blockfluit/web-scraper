@@ -28,6 +28,8 @@ public class Title {
     private final Map<String, Mono<Name>> nameLookup = new ConcurrentHashMap<>();
 
     private String imdbId;
+    private Double imdbRating;
+    private Long imdbRatingsAmount;
     private String title;
     private Integer releaseYear;
     private List<String> genres;
@@ -42,6 +44,16 @@ public class Title {
         this.imdbScraper = scraper;
 
         try {
+            this.imdbRating = driver.findElements(By.cssSelector("div[data-testid='hero-rating-bar__aggregate-rating__score'] span")).stream()
+                    .findFirst()
+                    .map(WebElement::getText)
+                    .map(Double::parseDouble)
+                    .orElse(null);
+            this.imdbRatingsAmount = driver.findElements(By.xpath("//div[div[@data-testid='hero-rating-bar__aggregate-rating__score']]/div[last()]")).stream()
+                    .findFirst()
+                    .map(WebElement::getText)
+                    .map(this::parseImdbRatingsAmount)
+                    .orElse(null);
             this.title = driver.findElement(By.cssSelector("span[data-testid='hero__primary-text']")).getText();
             this.releaseYear = Integer.parseInt(driver.findElement(By.cssSelector("a[href*='releaseinfo']")).getText().replaceAll("[^0-9*]", ""));
             this.genres = driver.findElements(By.cssSelector("div[data-testid='interests'] a")).stream()
@@ -53,6 +65,7 @@ public class Title {
                     .findFirst()
                     .orElse("");
 
+            // Scrape name information.
             Mono.zip(
                     getDirectors(driver).collectList(),
                     getWriters(driver).collectList(),
@@ -88,7 +101,7 @@ public class Title {
     }
 
     private Flux<Name> getNames(WebDriver driver, String field) {
-        return Flux.fromIterable(driver.findElements(By.xpath(String.format("//li[.//a[contains(text(), '%s')]]//a", field))).stream()
+        return Flux.fromIterable(driver.findElements(By.xpath(String.format("//li[@data-testid='title-pc-principal-credit' and .//*[contains(text(), '%s')]]//a", field))).stream()
                         .map(element -> element.getAttribute("href"))
                         .map(ImdbUtils::getIdFromUrl)
                         .filter(Objects::nonNull)
@@ -98,5 +111,13 @@ public class Title {
                 .runOn(Schedulers.boundedElastic())
                 .flatMap(id -> nameLookup.computeIfAbsent(id, imdbScraper::scrapeName))
                 .sequential();
+    }
+
+    private Long parseImdbRatingsAmount(String ratingsAmount) {
+        return Long.parseLong(
+                ratingsAmount
+                        .replaceAll("(?i)k", "000")
+                        .replaceAll("(?i)m", "000000")
+        );
     }
 }
