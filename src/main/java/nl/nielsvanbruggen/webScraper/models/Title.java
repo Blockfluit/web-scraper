@@ -38,6 +38,7 @@ public class Title {
     private List<Name> writers;
     private List<Name> creators;
     private List<Name> stars;
+    private List<Name> cast;
 
     public Title(String imdbId, WebDriver driver, ImdbScraper scraper) throws ImdbScrapeException {
         this.imdbId = imdbId;
@@ -77,6 +78,7 @@ public class Title {
                         this.writers = data.getT2();
                         this.creators = data.getT3();
                         this.stars = data.getT4();
+                        this.cast = data.getT5();
                     })
                     .block();
         } catch (Exception e) {
