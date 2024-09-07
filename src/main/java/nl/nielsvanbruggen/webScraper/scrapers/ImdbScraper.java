@@ -48,6 +48,7 @@ public class ImdbScraper {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
                 sink.success(new Title(id, driver, this));
+                log.debug("Finished scraping title: {}", url);
             } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
                 sink.error(e);
@@ -75,6 +76,7 @@ public class ImdbScraper {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
                 sink.success(new Name(id, driver));
+                log.debug("Finished scraping name: {}", url);
             } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
                 sink.error(e);
@@ -112,6 +114,7 @@ public class ImdbScraper {
                         .forEach(sink::next);
 
                 sink.complete();
+                log.debug("Finished scraping full cast: {}", url);
             } catch (Exception e) {
                 sink.error(new ImdbScrapeException(e));
             } finally {
