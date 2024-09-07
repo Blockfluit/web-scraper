@@ -3,7 +3,6 @@ package nl.nielsvanbruggen.webScraper.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import nl.nielsvanbruggen.webScraper.exceptions.ImdbScrapeException;
 import nl.nielsvanbruggen.webScraper.scrapers.ImdbScraper;
 import nl.nielsvanbruggen.webScraper.utils.ImdbUtils;
@@ -116,10 +115,14 @@ public class Title {
     }
 
     private Long parseImdbRatingsAmount(String ratingsAmount) {
-        return Long.parseLong(
-                ratingsAmount
-                        .replaceAll("(?i)k", "000")
-                        .replaceAll("(?i)m", "000000")
-        );
+        String prefix = ratingsAmount.replaceAll("[^a-zA-Z]", "").toLowerCase();
+
+        Long multiplier = switch (prefix) {
+            case "m" -> 1_000_000L;
+            case "k" -> 1_000L;
+            default -> 1L;
+        };
+
+        return (long) (Double.parseDouble(ratingsAmount.replaceAll("[^0-9]", "")) * multiplier);
     }
 }

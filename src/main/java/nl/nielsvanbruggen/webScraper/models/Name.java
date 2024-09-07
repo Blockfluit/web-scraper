@@ -3,7 +3,7 @@ package nl.nielsvanbruggen.webScraper.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.webScraper.exceptions.ImdbScrapeException;
 import nl.nielsvanbruggen.webScraper.utils.ImdbUtils;
 import org.openqa.selenium.By;
@@ -12,8 +12,10 @@ import org.openqa.selenium.WebElement;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
+@Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class Name {
@@ -56,7 +58,11 @@ public class Name {
                 String birthText = driver.findElement(By.xpath("//div[@data-testid='birth-and-death-birthdate'][1]"))
                         .findElement(By.xpath(".//span[2]"))
                         .getAttribute("innerHTML");
-                this.dateOfBirth = LocalDate.parse(birthText, formatter);
+                try {
+                    this.dateOfBirth = LocalDate.parse(birthText, formatter);
+                } catch (DateTimeParseException e) {
+                    log.warn("Could not parse date of birth of imdb name: {}", imdbId);
+                }
             }
 
             if(!driver.findElements(By.cssSelector("div[data-testid='birth-and-death-deathdate']")).isEmpty()) {
@@ -64,7 +70,11 @@ public class Name {
                         .findElement(By.xpath(".//span[2]"))
                         .getAttribute("innerHTML")
                         .replaceAll("<span.+/span>", "");
-                this.dateOfDeath = LocalDate.parse(deathText, formatter);
+                try {
+                    this.dateOfDeath = LocalDate.parse(deathText, formatter);
+                } catch (DateTimeParseException e) {
+                    log.warn("Could not parse date of death of imdb name: {}", imdbId);
+                }
             }
         } catch (Exception e) {
             throw new ImdbScrapeException(e);
