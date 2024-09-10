@@ -9,4 +9,5 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "imdb")
 public class ImdbProperties {
     private String baseUrl;
+    private int searchLimit;
 }

@@ -1,11 +1,11 @@
-package nl.nielsvanbruggen.webScraper.models;
+package nl.nielsvanbruggen.webScraper.imdb.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import nl.nielsvanbruggen.webScraper.exceptions.ImdbScrapeException;
-import nl.nielsvanbruggen.webScraper.utils.ImdbUtils;
+import nl.nielsvanbruggen.webScraper.imdb.exceptions.ImdbScrapeException;
+import nl.nielsvanbruggen.webScraper.imdb.utils.ImdbUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;

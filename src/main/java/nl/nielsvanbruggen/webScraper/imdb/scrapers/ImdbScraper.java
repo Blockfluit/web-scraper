@@ -1,11 +1,12 @@
-package nl.nielsvanbruggen.webScraper.scrapers;
+package nl.nielsvanbruggen.webScraper.imdb.scrapers;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.webScraper.config.ImdbProperties;
-import nl.nielsvanbruggen.webScraper.models.Title;
-import nl.nielsvanbruggen.webScraper.models.Name;
-import nl.nielsvanbruggen.webScraper.exceptions.ImdbScrapeException;
-import nl.nielsvanbruggen.webScraper.utils.ImdbUtils;
+import nl.nielsvanbruggen.webScraper.imdb.models.SearchTitleResult;
+import nl.nielsvanbruggen.webScraper.imdb.models.Title;
+import nl.nielsvanbruggen.webScraper.imdb.models.Name;
+import nl.nielsvanbruggen.webScraper.imdb.exceptions.ImdbScrapeException;
+import nl.nielsvanbruggen.webScraper.imdb.utils.ImdbUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -13,9 +14,12 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 import static java.lang.String.format;
@@ -37,7 +41,7 @@ public class ImdbScraper {
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         return Mono.create(sink -> {
-            log.info("Scraping title: {}", url);
+            log.info("Scraping title: ({})", url);
 
             try {
                 driver.get(url);
@@ -48,7 +52,7 @@ public class ImdbScraper {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
                 sink.success(new Title(id, driver, this));
-                log.debug("Finished scraping title: {}", url);
+                log.debug("Finished scraping title: ({})", url);
             } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
                 sink.error(e);
@@ -66,7 +70,7 @@ public class ImdbScraper {
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         return Mono.create(sink -> {
-            log.info("Scraping name: {}", url);
+            log.info("Scraping name: ({})", url);
 
             try {
                 driver.get(url);
@@ -76,7 +80,7 @@ public class ImdbScraper {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
                 sink.success(new Name(id, driver));
-                log.debug("Finished scraping name: {}", url);
+                log.debug("Finished scraping name: ({})", url);
             } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
                 sink.error(e);
@@ -94,7 +98,7 @@ public class ImdbScraper {
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         return Flux.create(sink -> {
-            log.info("Scraping full cast: {}", url);
+            log.info("Scraping full cast: ({})", url);
 
             try {
                 driver.get(url);
@@ -114,7 +118,42 @@ public class ImdbScraper {
                         .forEach(sink::next);
 
                 sink.complete();
-                log.debug("Finished scraping full cast: {}", url);
+                log.debug("Finished scraping full cast: ({})", url);
+            } catch (Exception e) {
+                sink.error(new ImdbScrapeException(e));
+            } finally {
+                driver.quit();
+            }
+        });
+    }
+
+    public Flux<SearchTitleResult> scrapeSearchTitle(String search) {
+        String url = UriComponentsBuilder.fromHttpUrl(imdbProperties.getBaseUrl())
+                .pathSegment("search", "title")
+                .queryParam("title", URLEncoder.encode(search, StandardCharsets.UTF_8))
+                .build(true)
+                .toUriString();
+
+        WebDriver driver = new ChromeDriver(chromeOptions);
+
+        return Flux.create(sink -> {
+            log.info("Scraping search title: ({})", url);
+
+            try {
+                driver.get(url);
+
+//                Wait for title to visible.
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[contains(@class, 'ipc-metadata-list')]")));
+
+                driver.findElements(By.xpath("//ul[contains(@class, 'ipc-metadata-list')]//li[contains(@class, 'ipc-metadata-list-summary-item')]")).stream()
+                        .limit(5)
+                        .parallel()
+                        .map(SearchTitleResult::new)
+                        .forEach(sink::next);
+
+                sink.complete();
+                log.debug("Finished scraping search title: ({})", url);
             } catch (Exception e) {
                 sink.error(new ImdbScrapeException(e));
             } finally {

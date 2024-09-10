@@ -7,4 +7,5 @@ server:
     context-path: /api/v1
 
 imdb:
-  baseUrl: {IMDB_BASEURL}
+  baseUrl: {IMDB_BASEURL:https://www.imdb.com/}
+  searchLimit: {IMDB_SEARCH_LIMIT:5}
