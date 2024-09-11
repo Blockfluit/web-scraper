@@ -51,7 +51,7 @@ public class ImdbScraper {
 
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
 
-                sink.success(new Title(id, driver, this));
+                sink.success(new Title(id, driver.findElement(By.xpath("//section[@data-testid='atf-wrapper-bg']")), this));
                 log.debug("Finished scraping title: ({})", url);
             } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
@@ -110,7 +110,7 @@ public class ImdbScraper {
                 driver.findElement(By.className("cast_list"))
                         .findElements(By.xpath("//td[@class='primary_photo']/a")).stream()
                         .map(element -> {
-                            String castId = ImdbUtils.getIdFromUrl(element.getAttribute("href"));
+                            String castId = ImdbUtils.getNameIdFromUrl(element.getAttribute("href"));
                             String[] fullName = ImdbUtils.parseName(element.findElement(By.tagName("img")).getAttribute("alt"));
 
                             return new Name(castId, fullName[0], fullName[1]);

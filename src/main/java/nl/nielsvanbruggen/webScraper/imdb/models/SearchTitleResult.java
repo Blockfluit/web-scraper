@@ -24,7 +24,7 @@ public class SearchTitleResult {
         String fullTitle = element.findElement(By.xpath(".//h3[@class='ipc-title__text']")).getText();
         this.title = fullTitle.replaceAll("^[0-9]+\\.", "").trim();
         this.order = Integer.parseInt(fullTitle.split("\\.")[0]);
-        this.imdbId = ImdbUtils.getIdFromUrl(element.findElement(By.xpath(".//a[contains(@href, 'title')]")).getAttribute("href"));
+        this.imdbId = ImdbUtils.getTitleIdFromUrl(element.findElement(By.xpath(".//a[contains(@href, 'title')]")).getAttribute("href"));
 
         String releaseYearString = element.findElement(By.xpath(".//span[contains(@class, 'dli-title-metadata-item')]")).getText().replaceAll("[^0-9*]", "");
         if(releaseYearString.length() >= 4) this.releaseYear = Integer.parseInt(releaseYearString.substring(0, 4));

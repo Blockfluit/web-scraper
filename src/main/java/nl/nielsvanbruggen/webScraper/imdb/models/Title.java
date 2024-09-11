@@ -3,11 +3,11 @@ package nl.nielsvanbruggen.webScraper.imdb.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.webScraper.imdb.exceptions.ImdbScrapeException;
 import nl.nielsvanbruggen.webScraper.imdb.scrapers.ImdbScraper;
 import nl.nielsvanbruggen.webScraper.imdb.utils.ImdbUtils;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class Title {
@@ -39,38 +40,39 @@ public class Title {
     private List<Name> stars;
     private List<Name> cast;
 
-    public Title(String imdbId, WebDriver driver, ImdbScraper scraper) throws ImdbScrapeException {
+    public Title(String imdbId, WebElement webElement, ImdbScraper scraper) throws ImdbScrapeException {
         this.imdbId = imdbId;
         this.imdbScraper = scraper;
 
         try {
-            this.imdbRating = driver.findElements(By.cssSelector("div[data-testid='hero-rating-bar__aggregate-rating__score'] span")).stream()
+            this.imdbRating = webElement.findElements(By.cssSelector("div[data-testid='hero-rating-bar__aggregate-rating__score'] span")).stream()
                     .findFirst()
                     .map(WebElement::getText)
                     .map(Double::parseDouble)
                     .orElse(null);
-            this.imdbRatingsAmount = driver.findElements(By.xpath("//div[div[@data-testid='hero-rating-bar__aggregate-rating__score']]/div[last()]")).stream()
+            this.imdbRatingsAmount = webElement.findElements(By.xpath("//div[div[@data-testid='hero-rating-bar__aggregate-rating__score']]/div[last()]")).stream()
                     .findFirst()
                     .map(WebElement::getText)
                     .map(this::parseImdbRatingsAmount)
                     .orElse(null);
-            this.title = driver.findElement(By.cssSelector("span[data-testid='hero__primary-text']")).getText();
-            this.releaseYear = Integer.parseInt(driver.findElement(By.cssSelector("a[href*='releaseinfo']")).getText().replaceAll("[^0-9*]", ""));
-            this.genres = driver.findElements(By.cssSelector("div[data-testid='interests'] a")).stream()
+            this.title = webElement.findElement(By.cssSelector("span[data-testid='hero__primary-text']")).getText();
+            this.releaseYear = Integer.parseInt(webElement.findElement(By.cssSelector("a[href*='releaseinfo']")).getText().replaceAll("[^0-9*]", ""));
+            this.genres = webElement.findElements(By.cssSelector("div[data-testid='interests'] a")).stream()
                     .map(WebElement::getText)
                     .toList();
-            this.description = driver.findElements(By.cssSelector("p[data-testid='plot'] span")).stream()
+            this.description = webElement.findElements(By.cssSelector("p[data-testid='plot'] span")).stream()
                     .map(WebElement::getText)
                     .filter(s -> !s.isBlank())
                     .findFirst()
                     .orElse("");
 
             // Scrape name information.
+            WebElement persons = webElement.findElement(By.xpath("//ul[contains(@class, 'title-pc-list')]"));
             Mono.zip(
-                    getDirectors(driver).collectList(),
-                    getWriters(driver).collectList(),
-                    getCreators(driver).collectList(),
-                    getStars(driver).collectList(),
+                    getDirectors(persons).collectList(),
+                    getWriters(persons).collectList(),
+                    getCreators(persons).collectList(),
+                    getStars(persons).collectList(),
                     scraper.scrapeFullCast(imdbId).collectList())
                     .doOnNext(data -> {
                         this.directors = data.getT1();
@@ -85,26 +87,26 @@ public class Title {
         }
     }
 
-    private Flux<Name> getDirectors(WebDriver driver) {
-        return getNames(driver, "Director");
+    private Flux<Name> getDirectors(WebElement webElement) {
+        return getNames(webElement, "Director");
     }
 
-    private Flux<Name> getWriters(WebDriver driver) {
-        return getNames(driver, "Writer");
+    private Flux<Name> getWriters(WebElement webElement) {
+        return getNames(webElement, "Writer");
     }
 
-    private Flux<Name> getCreators(WebDriver driver) {
-        return getNames(driver, "Creator");
+    private Flux<Name> getCreators(WebElement webElement) {
+        return getNames(webElement, "Creator");
     }
 
-    private Flux<Name> getStars(WebDriver driver) {
-        return getNames(driver, "Star");
+    private Flux<Name> getStars(WebElement webElement) {
+        return getNames(webElement, "Star");
     }
 
-    private Flux<Name> getNames(WebDriver driver, String field) {
-        return Flux.fromIterable(driver.findElements(By.xpath(String.format("//li[@data-testid='title-pc-principal-credit' and .//*[contains(text(), '%s')]]//a", field))).stream()
+    private Flux<Name> getNames(WebElement webElement, String field) {
+        return Flux.fromIterable(webElement.findElements(By.xpath(String.format("//li[@data-testid='title-pc-principal-credit' and .//*[contains(text(), '%s')]]//a", field))).stream()
                         .map(element -> element.getAttribute("href"))
-                        .map(ImdbUtils::getIdFromUrl)
+                        .map(ImdbUtils::getNameIdFromUrl)
                         .filter(Objects::nonNull)
                         .distinct()
                         .toList())

@@ -5,7 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ImdbUtils {
-    private static final Pattern urlIdPattern = Pattern.compile("\\b(title|name)\\b/(\\p{Alnum}+)/");
+    private static final Pattern nameIdPattern = Pattern.compile("/name/(\\p{Alnum}+)/");
+    private static final Pattern titleIdPattern = Pattern.compile("/title/(\\p{Alnum}+)/");
 
     private ImdbUtils() {}
 
@@ -23,11 +24,19 @@ public class ImdbUtils {
         return name;
     }
 
-    public static String getIdFromUrl(String url) {
-        Matcher matcher = urlIdPattern.matcher(url);
+    public static String getNameIdFromUrl(String url) {
+        Matcher matcher = nameIdPattern.matcher(url);
 
         if(matcher.find()) {
-            return matcher.group(2);
+            return matcher.group(1);
+        } else return null;
+    }
+
+    public static String getTitleIdFromUrl(String url) {
+        Matcher matcher = titleIdPattern.matcher(url);
+
+        if(matcher.find()) {
+            return matcher.group(1);
         } else return null;
     }
 }
