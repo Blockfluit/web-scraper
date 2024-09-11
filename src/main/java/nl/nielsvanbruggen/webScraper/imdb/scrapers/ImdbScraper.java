@@ -77,9 +77,9 @@ public class ImdbScraper {
 
                 // Wait for title to visible.
                 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-                wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1[data-testid='hero__pageTitle']")));
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//section[@data-testid='atf-wrapper-bg']")));
 
-                sink.success(new Name(id, driver));
+                sink.success(new Name(id, driver.findElement(By.xpath("//section[@data-testid='atf-wrapper-bg']"))));
                 log.debug("Finished scraping name: ({})", url);
             } catch(ImdbScrapeException e) {
                 log.error(e.getMessage(), e);
